@@ -5,7 +5,7 @@ import { createUser, deleteUser, updateUser } from "@/lib/actions/user.actions";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  // You can find this in the Clerk Dashboard -> Webhooks -> choose the endpoint
+  // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   const eventType = evt.type;
-  // Do something with the user created event
+
   if (eventType === "user.created") {
     const { id, email_addresses, image_url, first_name, last_name, username } =
       evt.data;
@@ -59,9 +59,9 @@ export async function POST(req: Request) {
     const user = {
       clerkId: id,
       email: email_addresses[0].email_address,
+      username: username!,
       firstName: first_name!,
       lastName: last_name!,
-      username: username!,
       photo: image_url,
     };
 
@@ -75,10 +75,12 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({
-      message: "OK",
-      user: newUser,
-    });
+    return NextResponse.json(
+      { message: "OK", user: newUser },
+      {
+        status: 201,
+      }
+    );
   }
 
   if (eventType === "user.updated") {
@@ -106,3 +108,15 @@ export async function POST(req: Request) {
 
   return new Response("", { status: 200 });
 }
+
+/*
+
+  ** NOTES:
+   - Clerk webhooks allow you to receive event notifications from Clerk,
+      such as when a user is created or updated.
+   - When an event occurs, Clerk will send an HTTP POST request to your webhook endpoint configured for the event type. 
+   - The payload carries a JSON object. You can then use the information from the request's JSON payload to trigger actions in
+      your app, such as sending a notification or updating a database.
+
+
+*/
